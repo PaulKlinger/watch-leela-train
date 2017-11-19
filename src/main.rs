@@ -27,9 +27,9 @@ fn resolve_capture(board: &mut Vec<char>) {
     let mut liberties: Vec<(usize, usize)> = Vec::new();
     for row in 1..SIZE+1 {
         for col in 1..SIZE+1 {
-            if (board[get_index((row, col))] != '.' && ! processed_coords.contains(&(row,col))) {
+            if board[get_index((row, col))] != '.' && ! processed_coords.contains(&(row,col)) {
                 process_chain(board, row, col, &mut chain_coords, &mut liberties);
-                if (liberties.len() == 0) {
+                if liberties.len() == 0 {
                     println!("{} stones captured!", chain_coords.len());
                     for &(c_row, c_col) in &chain_coords {
                         board[get_index((c_row, c_col))] = '.';
@@ -43,19 +43,20 @@ fn resolve_capture(board: &mut Vec<char>) {
 }
 
 fn process_chain(board: &Vec<char>, row: usize, col: usize, chain_coords: &mut Vec<(usize, usize)>, liberties: &mut Vec<(usize, usize)>) {
-    if (row < 1 || col < 1 || row > SIZE || col > SIZE){return;}
+    if row < 1 || col < 1 || row > SIZE || col > SIZE {
+        return;
+    }
     let val = board[get_index((row,col))];
     let coord = (row, col);
-    if (val == '.') {
+    if val == '.' {
         liberties.push(coord);
         return;
     }
-    else if (
-            ! chain_coords.contains(&coord) 
+    else if ! chain_coords.contains(&coord) 
             && (chain_coords.len() == 0
                 || val == board[get_index(*chain_coords.get(0).unwrap())]
                 )
-    ){
+    {
         chain_coords.push(coord);
         process_chain(board, row - 1, col, chain_coords, liberties);
         process_chain(board, row + 1, col, chain_coords, liberties);
@@ -84,7 +85,7 @@ fn main() {
         .expect("failed to start autogtp.exe");
     let mut child_out = BufReader::new(child.stderr.as_mut().unwrap());
     let mut buffer: Vec<u8> = Vec::new();
-    let mut line = String::new();
+    let mut line: String;
 
     let mut board: Vec<char> = vec!['.'; SIZE * SIZE];
     let mut current_player = 'o';
@@ -97,7 +98,7 @@ fn main() {
         line = String::from_utf8_lossy(&buffer).into();
         buffer.clear();
 
-        if (end_regex.is_match(&line)) {
+        if end_regex.is_match(&line) {
             board = vec!['.'; SIZE * SIZE];
             current_player = 'o';
         }
@@ -114,7 +115,7 @@ fn main() {
             _ => {},
         }
 
-        if (current_player == 'o') {current_player = 'x'}
+        if current_player == 'o' {current_player = 'x'}
         else {current_player = 'o'}
     }
 }
