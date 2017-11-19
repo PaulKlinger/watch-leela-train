@@ -79,6 +79,8 @@ fn print_board(board: &Vec<char>) {
 fn main() {
     //println!("Hello, world!");
     let mut child = Command::new("./autogtp.exe")
+        .arg("-k")
+        .arg("sgfs")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
