@@ -101,17 +101,18 @@ fn main() {
             board = vec!['.'; SIZE * SIZE];
             current_player = 'o';
         }
-        
+
+        println!("{}",line);
         match move_regex.captures(&line) {
-            Some(caps) => update_board(
+            Some(caps) => {
+                update_board(
                 &mut board,
                 caps.get(1).unwrap().as_str(),
                 caps.get(2).unwrap().as_str(),
-                current_player),
+                current_player);
+                print_board(&board);},
             _ => {},
         }
-        println!("{}",line);
-        print_board(&board);
 
         if (current_player == 'o') {current_player = 'x'}
         else {current_player = 'o'}
