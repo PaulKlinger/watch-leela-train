@@ -4,6 +4,7 @@ use std::process::{Command,Stdio};
 use std::io::{BufRead, BufReader};
 use std::str;
 use std::ops::{Index, IndexMut};
+use std::env;
 
 use regex::Regex;
 
@@ -124,13 +125,16 @@ fn print_board(board: &Board) {
 }
 
 fn main() {
-    let mut child = Command::new("./autogtp.exe")
-        .arg("-k")
-        .arg("sgfs")
+    let mut arguments: Vec<_> = env::args().skip(1).collect();
+    if arguments.len() < 2 {
+        arguments = vec!["-k".to_string(), "sgfs".to_string()];
+    }
+    let mut child = Command::new("./autogtp")
+        .args(arguments)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .expect("failed to start autogtp.exe");
+        .expect("failed to start autogtp");
     let mut child_out = BufReader::new(child.stderr.as_mut().unwrap());
     let mut buffer: Vec<u8> = Vec::new();
     let mut line: String;
