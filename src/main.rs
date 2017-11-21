@@ -76,12 +76,13 @@ fn resolve_capture(board: &mut Board) {
     let mut liberties: Vec<Coord> = Vec::new();
     for row in 1..=board.size {
         for col in 1..=board.size {
-            if board[Coord(row, col)] != '.' && ! processed_coords.contains(&Coord(row,col)) {
-                process_chain(board, row, col, &mut chain_coords, &mut liberties);
+            let coord = Coord(row, col);
+            if board[coord] != '.' && ! processed_coords.contains(&coord) {
+                process_chain(board, coord, &mut chain_coords, &mut liberties);
                 if liberties.len() == 0 {
                     println!("{} stones captured!", chain_coords.len());
-                    for &Coord(c_row, c_col) in &chain_coords {
-                        board[Coord(c_row, c_col)] = '.';
+                    for &chain_coord in &chain_coords {
+                        board[chain_coord] = '.';
                     }
                 }
                 processed_coords.append(&mut chain_coords); // this clears chain_coords
@@ -91,12 +92,13 @@ fn resolve_capture(board: &mut Board) {
     }
 }
 
-fn process_chain(board: &Board, row: usize, col: usize, chain_coords: &mut Vec<Coord>, liberties: &mut Vec<Coord>) {
+fn process_chain(board: &Board, coord: Coord, chain_coords: &mut Vec<Coord>, liberties: &mut Vec<Coord>) {
+    let Coord(row, col) = coord;
     if row < 1 || col < 1 || row > board.size || col > board.size {
         return;
     }
-    let val = board[Coord(row,col)];
-    let coord = Coord(row, col);
+    
+    let val = board[coord];
     if val == '.' {
         liberties.push(coord);
         return;
@@ -107,10 +109,10 @@ fn process_chain(board: &Board, row: usize, col: usize, chain_coords: &mut Vec<C
                 )
     {
         chain_coords.push(coord);
-        process_chain(board, row - 1, col, chain_coords, liberties);
-        process_chain(board, row + 1, col, chain_coords, liberties);
-        process_chain(board, row, col - 1, chain_coords, liberties);
-        process_chain(board, row, col + 1, chain_coords, liberties);
+        process_chain(board, Coord(row - 1, col), chain_coords, liberties);
+        process_chain(board, Coord(row + 1, col), chain_coords, liberties);
+        process_chain(board, Coord(row, col - 1), chain_coords, liberties);
+        process_chain(board, Coord(row, col + 1), chain_coords, liberties);
     }
     
 }
