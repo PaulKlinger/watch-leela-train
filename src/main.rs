@@ -1,3 +1,4 @@
+#![feature(inclusive_range_syntax)]
 extern crate regex;
 
 use std::process::{Command,Stdio};
@@ -73,8 +74,8 @@ fn resolve_capture(board: &mut Board) {
     let mut processed_coords: Vec<Coord> = Vec::new();
     let mut chain_coords: Vec<Coord> = Vec::new();
     let mut liberties: Vec<Coord> = Vec::new();
-    for row in 1..board.size+1 {
-        for col in 1..board.size+1 {
+    for row in 1..=board.size {
+        for col in 1..=board.size {
             if board[Coord(row, col)] != '.' && ! processed_coords.contains(&Coord(row,col)) {
                 process_chain(board, row, col, &mut chain_coords, &mut liberties);
                 if liberties.len() == 0 {
@@ -115,9 +116,9 @@ fn process_chain(board: &Board, row: usize, col: usize, chain_coords: &mut Vec<C
 }
 
 fn print_board(board: &Board) {
-    for row in 1..board.size+1 {
+    for row in 1..=board.size {
         let mut out_line = String::new();
-        for col in 1..board.size+1 {
+        for col in 1..=board.size {
             out_line.push(board[Coord(row, col)]);
         }
         println!("{}",out_line);
