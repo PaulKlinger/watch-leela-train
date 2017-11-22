@@ -122,6 +122,7 @@ fn print_board(board: &Board) {
         let mut out_line = String::new();
         for col in 1..=board.size {
             out_line.push(board[Coord(row, col)]);
+            out_line.push(' ');
         }
         println!("{}",out_line);
     }
