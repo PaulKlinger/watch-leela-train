@@ -1,6 +1,6 @@
 [package]
 name = "watch_leela_train"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Paul Klinger <klinger.paul@gmail.com>"]
 
 [dependencies]
