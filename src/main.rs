@@ -6,16 +6,17 @@ use std::io::{BufRead, BufReader};
 use std::str;
 use std::ops::{Index, IndexMut};
 use std::env;
+use std::collections::HashSet;
 
 use regex::Regex;
 
 const SIZE: usize = 19;
 const ROW_INDICES: &'static str = "ABCDEFGHJKLMNOPQRST";
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 struct Coord(usize, usize);
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 enum Player {
     White,
     Black,
@@ -71,9 +72,9 @@ fn update_board(board: &mut Board, row_str: &str, col_str: &str, current_player:
 }
 
 fn resolve_capture(board: &mut Board) {
-    let mut processed_coords: Vec<Coord> = Vec::new();
-    let mut chain_coords: Vec<Coord> = Vec::new();
-    let mut liberties: Vec<Coord> = Vec::new();
+    let mut processed_coords: HashSet<Coord> = HashSet::new();
+    let mut chain_coords: HashSet<Coord> = HashSet::new();
+    let mut liberties: HashSet<Coord> = HashSet::new();
     for row in 1..=board.size {
         for col in 1..=board.size {
             let coord = Coord(row, col);
@@ -85,14 +86,14 @@ fn resolve_capture(board: &mut Board) {
                         board[chain_coord] = '.';
                     }
                 }
-                processed_coords.append(&mut chain_coords); // this clears chain_coords
+                processed_coords.extend(chain_coords.drain()); // this clears chain_coords
                 liberties.clear()
             }
         }
     }
 }
 
-fn process_chain(board: &Board, coord: Coord, chain_coords: &mut Vec<Coord>, liberties: &mut Vec<Coord>) {
+fn process_chain(board: &Board, coord: Coord, chain_coords: &mut HashSet<Coord>, liberties: &mut HashSet<Coord>) {
     let Coord(row, col) = coord;
     if row < 1 || col < 1 || row > board.size || col > board.size {
         return;
@@ -100,15 +101,14 @@ fn process_chain(board: &Board, coord: Coord, chain_coords: &mut Vec<Coord>, lib
     
     let val = board[coord];
     if val == '.' {
-        liberties.push(coord);
+        liberties.insert(coord);
         return;
     }
     else if ! chain_coords.contains(&coord) 
             && (chain_coords.len() == 0
-                || val == board[*chain_coords.get(0).unwrap()]
-                )
-    {
-        chain_coords.push(coord);
+                || val == board[*chain_coords.iter().next().unwrap()]
+                ){
+        chain_coords.insert(coord);
         process_chain(board, Coord(row - 1, col), chain_coords, liberties);
         process_chain(board, Coord(row + 1, col), chain_coords, liberties);
         process_chain(board, Coord(row, col - 1), chain_coords, liberties);
