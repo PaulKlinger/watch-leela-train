@@ -57,6 +57,18 @@ impl Board {
             size: size,
         }
     }
+
+    fn to_string(&self) -> String {
+        let mut out = String::new();
+        for row in 1..=self.size {
+            out.push('\n');
+            for col in 1..=self.size {
+                out.push(self[Coord(row, col)]);
+                out.push(' ');
+            }
+        }
+        return out;
+    }
 }
 
 fn get_index(size: usize, Coord(row, col): Coord) -> usize {
@@ -117,17 +129,6 @@ fn process_chain(board: &Board, coord: Coord, chain_coords: &mut HashSet<Coord>,
     
 }
 
-fn print_board(board: &Board) {
-    for row in 1..=board.size {
-        let mut out_line = String::new();
-        for col in 1..=board.size {
-            out_line.push(board[Coord(row, col)]);
-            out_line.push(' ');
-        }
-        println!("{}",out_line);
-    }
-}
-
 fn main() {
     let mut arguments: Vec<_> = env::args().skip(1).collect();
     if arguments.len() < 2 {
@@ -152,6 +153,7 @@ fn main() {
     loop {
         child_out.read_until(')' as u8, &mut buffer).unwrap();
         line = String::from_utf8_lossy(&buffer).into();
+        let mut out = line.clone();
         buffer.clear();
 
         if end_regex.is_match(&line) {
@@ -159,7 +161,6 @@ fn main() {
             current_player = Player::White;
         }
 
-        println!("{}",line);
         match move_regex.captures(&line) {
             Some(caps) => {
                 update_board(
@@ -167,9 +168,10 @@ fn main() {
                 caps.get(1).unwrap().as_str(),
                 caps.get(2).unwrap().as_str(),
                 current_player);
-                print_board(&board);},
+                out.push_str(&board.to_string());},
             _ => {},
         }
+        println!("{}", out);
 
         current_player = match current_player {
             Player::White => Player::Black,
