@@ -145,7 +145,7 @@ fn main() {
     let mut line: String;
 
     let mut board: Board = Board::new(SIZE);
-    let mut current_player = Player::White;
+    let mut current_player = Player::Black;
     let move_regex = Regex::new(r"[ \n]\d+ \(([A-Z])(\d+)\)").unwrap();
     let end_regex = Regex::new(r"Game has ended").unwrap();
     assert!(move_regex.is_match(" 245 (F18)"));
@@ -158,7 +158,7 @@ fn main() {
 
         if end_regex.is_match(&line) {
             board = Board::new(SIZE);
-            current_player = Player::White;
+            current_player = Player::Black;
         }
 
         match move_regex.captures(&line) {
