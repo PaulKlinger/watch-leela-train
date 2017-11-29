@@ -193,7 +193,8 @@ fn main() {
                     current_player);
                 if !captures.is_empty() {
                     out.push_str(&format!(" Captured chains: {}",
-                        captures.iter().fold(String::new(), |acc, &num| acc + &num.to_string() + ", ")
+                        captures.iter().map(|c| c.to_string())
+                            .collect::<Vec<String>>().join(", ")
                         ))
                 }
             },
@@ -202,7 +203,7 @@ fn main() {
         
         if move_or_pass_regex.is_match(&line) {
             out.push_str(&board.to_string());
-            
+
             current_player = match current_player {
                 Player::White => Player::Black,
                 Player::Black => Player::White,
