@@ -142,7 +142,6 @@ fn get_autogtp_version() -> String {
 
 fn main() {
     let autogtp_version = get_autogtp_version();
-    println!("version string: '{}'", autogtp_version);
 
     let mut arguments: Vec<_> = env::args().skip(1).collect();
     if arguments.len() < 2 {
