@@ -192,7 +192,7 @@ fn main() {
                     caps.get(2).unwrap().as_str(),
                     current_player);
                 if !captures.is_empty() {
-                    out.push_str(&format!(" Captured chains: {}",
+                    out.push_str(&format!(" Captured chain lengths: {}",
                         captures.iter().map(|c| c.to_string())
                             .collect::<Vec<String>>().join(", ")
                         ))
