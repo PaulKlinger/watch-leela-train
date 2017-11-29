@@ -164,7 +164,7 @@ fn main() {
     let mut current_player = Player::Black;
     let move_regex = Regex::new(r"[ \n]\d+ \(([A-Z])(\d+)\)").unwrap();
     let end_regex = Regex::new(r"Game has ended").unwrap();
-    let pass_regex = Regex::new(r"\(pass\)").unwrap();
+    let move_or_pass_regex = Regex::new(r"\((?:[A-Z]\d+)|(?:pass)\)").unwrap();
     assert!(move_regex.is_match(" 245 (F18)"));
 
     loop {
@@ -187,29 +187,28 @@ fn main() {
         match move_regex.captures(&line) {
             Some(caps) => {
                 let captures = update_board(
-                &mut board,
-                caps.get(1).unwrap().as_str(),
-                caps.get(2).unwrap().as_str(),
-                current_player);
+                    &mut board,
+                    caps.get(1).unwrap().as_str(),
+                    caps.get(2).unwrap().as_str(),
+                    current_player);
                 if !captures.is_empty() {
                     out.push_str(&format!(" Captured chains: {}",
                         captures.iter().fold(String::new(), |acc, &num| acc + &num.to_string() + ", ")
                         ))
                 }
-                out.push_str(&board.to_string());
-                },
+            },
             _ => {},
         }
         
-        if pass_regex.is_match(&line) {
+        if move_or_pass_regex.is_match(&line) {
             out.push_str(&board.to_string());
+            
+            current_player = match current_player {
+                Player::White => Player::Black,
+                Player::Black => Player::White,
+            }
         }
         out.push('\n');
         print!("{}", out);
-
-        current_player = match current_player {
-            Player::White => Player::Black,
-            Player::Black => Player::White,
-        }
     }
 }
