@@ -131,7 +131,19 @@ fn process_chain(board: &Board, coord: Coord, chain_coords: &mut HashSet<Coord>,
     
 }
 
+fn get_autogtp_version() -> String {
+    let output = Command::new("./autogtp")
+        .arg("--version")
+        .output()
+        .expect("failed to start autogtp");
+    String::from_utf8_lossy(&output.stdout).trim_right().split(' ').last()
+        .expect("Failed to determine autogtp version!").into()
+}
+
 fn main() {
+    let autogtp_version = get_autogtp_version();
+    println!("version string: '{}'", autogtp_version);
+
     let mut arguments: Vec<_> = env::args().skip(1).collect();
     if arguments.len() < 2 {
         arguments = vec!["-k".to_string(), "sgfs".to_string()];
@@ -142,7 +154,10 @@ fn main() {
         .stderr(Stdio::piped())
         .spawn()
         .expect("failed to start autogtp");
-     let mut child_out = BufReader::new(child.stderr.as_mut().unwrap());
+
+    let mut child_out = BufReader::new(child.stdout.as_mut().unwrap());
+    let mut child_err = BufReader::new(child.stderr.as_mut().unwrap());
+    
     let mut buffer: Vec<u8> = Vec::new();
     let mut line: String;
 
@@ -154,7 +169,13 @@ fn main() {
     assert!(move_regex.is_match(" 245 (F18)"));
 
     loop {
-        child_out.read_until(')' as u8, &mut buffer).unwrap();
+        // Early autogtp versions printed to stderr instead of stdout
+        if vec!["v1", "v2", "v3", "v4"].contains(&&autogtp_version[..]) { 
+            child_err.read_until(')' as u8, &mut buffer).unwrap();
+        } else {
+            child_out.read_until(')' as u8, &mut buffer).unwrap();
+        }
+
         line = String::from_utf8_lossy(&buffer).into();
         let mut out = line.clone();
         buffer.clear();
