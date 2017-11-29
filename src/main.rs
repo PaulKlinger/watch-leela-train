@@ -75,15 +75,16 @@ fn get_index(size: usize, Coord(row, col): Coord) -> usize {
     return (row - 1) * size + (col - 1)
 }
 
-fn update_board(board: &mut Board, row_str: &str, col_str: &str, current_player: Player) {
+fn update_board(board: &mut Board, row_str: &str, col_str: &str, current_player: Player) -> Vec<u8> {
     let row_index = ROW_INDICES.find(row_str).unwrap() + 1;
     let col_index: usize = col_str.parse().unwrap();
     board[Coord(row_index, col_index)] = current_player.symbol();
 
-    resolve_capture(board);
+    resolve_capture(board)
 }
 
-fn resolve_capture(board: &mut Board) {
+fn resolve_capture(board: &mut Board) -> Vec<u8>{
+    let mut out = Vec::new();
     let mut processed_coords: HashSet<Coord> = HashSet::new();
     let mut chain_coords: HashSet<Coord> = HashSet::new();
     let mut liberties: HashSet<Coord> = HashSet::new();
@@ -93,7 +94,7 @@ fn resolve_capture(board: &mut Board) {
             if board[coord] != '.' && ! processed_coords.contains(&coord) {
                 process_chain(board, coord, &mut chain_coords, &mut liberties);
                 if liberties.len() == 0 {
-                    println!("{} stones captured!", chain_coords.len());
+                    out.push(chain_coords.len() as u8);
                     for &chain_coord in &chain_coords {
                         board[chain_coord] = '.';
                     }
@@ -103,6 +104,7 @@ fn resolve_capture(board: &mut Board) {
             }
         }
     }
+    out
 }
 
 fn process_chain(board: &Board, coord: Coord, chain_coords: &mut HashSet<Coord>, liberties: &mut HashSet<Coord>) {
@@ -140,7 +142,7 @@ fn main() {
         .stderr(Stdio::piped())
         .spawn()
         .expect("failed to start autogtp");
-    let mut child_out = BufReader::new(child.stderr.as_mut().unwrap());
+     let mut child_out = BufReader::new(child.stderr.as_mut().unwrap());
     let mut buffer: Vec<u8> = Vec::new();
     let mut line: String;
 
@@ -148,6 +150,7 @@ fn main() {
     let mut current_player = Player::Black;
     let move_regex = Regex::new(r"[ \n]\d+ \(([A-Z])(\d+)\)").unwrap();
     let end_regex = Regex::new(r"Game has ended").unwrap();
+    let pass_regex = Regex::new(r"\(pass\)").unwrap();
     assert!(move_regex.is_match(" 245 (F18)"));
 
     loop {
@@ -163,15 +166,26 @@ fn main() {
 
         match move_regex.captures(&line) {
             Some(caps) => {
-                update_board(
+                let captures = update_board(
                 &mut board,
                 caps.get(1).unwrap().as_str(),
                 caps.get(2).unwrap().as_str(),
                 current_player);
-                out.push_str(&board.to_string());},
+                if !captures.is_empty() {
+                    out.push_str(&format!(" Captured chains: {}",
+                        captures.iter().fold(String::new(), |acc, &num| acc + &num.to_string() + ", ")
+                        ))
+                }
+                out.push_str(&board.to_string());
+                },
             _ => {},
         }
-        println!("{}", out);
+        
+        if pass_regex.is_match(&line) {
+            out.push_str(&board.to_string());
+        }
+        out.push('\n');
+        print!("{}", out);
 
         current_player = match current_player {
             Player::White => Player::Black,
