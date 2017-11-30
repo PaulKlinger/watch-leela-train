@@ -193,6 +193,9 @@ fn main() {
             Stream::Stderr => child_err.read_until(')' as u8, &mut buffer).unwrap(),
             Stream::Stdout => child_out.read_until(')' as u8, &mut buffer).unwrap(),
         };
+        if buffer.len() == 0 {
+            break;
+        }
 
         line = String::from_utf8_lossy(&buffer).into();
         let mut out = line.clone();
