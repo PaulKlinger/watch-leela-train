@@ -80,7 +80,7 @@ fn update_board(
     row_str: &str,
     col_str: &str,
     current_player: Player,
-) -> Vec<u8> {
+) -> Vec<u16> {
     let row_index = ROW_INDICES.find(row_str).unwrap() + 1;
     let col_index: usize = col_str.parse().unwrap();
     board[Coord(row_index, col_index)] = current_player.symbol();
@@ -88,7 +88,7 @@ fn update_board(
     resolve_capture(board)
 }
 
-fn resolve_capture(board: &mut Board) -> Vec<u8> {
+fn resolve_capture(board: &mut Board) -> Vec<u16> {
     let mut out = Vec::new();
     let mut processed_coords: HashSet<Coord> = HashSet::new();
     let mut chain_coords: HashSet<Coord> = HashSet::new();
@@ -99,7 +99,7 @@ fn resolve_capture(board: &mut Board) -> Vec<u8> {
             if board[coord] != '.' && !processed_coords.contains(&coord) {
                 process_chain(board, coord, &mut chain_coords, &mut liberties);
                 if liberties.len() == 0 {
-                    out.push(chain_coords.len() as u8);
+                    out.push(chain_coords.len() as u16);
                     for &chain_coord in &chain_coords {
                         board[chain_coord] = '.';
                     }
@@ -194,6 +194,7 @@ fn main() {
             Stream::Stdout => child_out.read_until(')' as u8, &mut buffer).unwrap(),
         };
         if buffer.len() == 0 {
+            // autogtp has exited
             break;
         }
 
@@ -216,12 +217,17 @@ fn main() {
                 );
                 if !captures.is_empty() {
                     out.push_str(&format!(
-                        " Captured {} stones.",
+                        " Captured {} stone{}.",
                         captures
                             .iter()
                             .map(|c| c.to_string())
                             .collect::<Vec<String>>()
-                            .join(", ")
+                            .join(", "),
+                        if captures.iter().sum::<u16>() > 1 {
+                            "s"
+                        } else {
+                            ""
+                        }
                     ))
                 }
             }
