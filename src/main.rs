@@ -178,13 +178,21 @@ fn main() {
     let move_or_pass_regex = Regex::new(r"\((?:[A-Z]\d+)|(?:pass)\)").unwrap();
     assert!(move_regex.is_match(" 245 (F18)"));
 
+    enum Stream {
+        Stdout,
+        Stderr,
+    }
+    // Early autogtp versions printed to stderr instead of stdout
+    let move_stream = match vec!["v1", "v2", "v3", "v4"].contains(&&autogtp_version[..]) {
+        true => Stream::Stderr,
+        false => Stream::Stdout,
+    };
+
     loop {
-        // Early autogtp versions printed to stderr instead of stdout
-        if vec!["v1", "v2", "v3", "v4"].contains(&&autogtp_version[..]) {
-            child_err.read_until(')' as u8, &mut buffer).unwrap();
-        } else {
-            child_out.read_until(')' as u8, &mut buffer).unwrap();
-        }
+        match move_stream {
+            Stream::Stderr => child_err.read_until(')' as u8, &mut buffer).unwrap(),
+            Stream::Stdout => child_out.read_until(')' as u8, &mut buffer).unwrap(),
+        };
 
         line = String::from_utf8_lossy(&buffer).into();
         let mut out = line.clone();
