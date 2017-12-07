@@ -168,6 +168,10 @@ fn main() {
     let mut arguments: Vec<_> = env::args().skip(1).collect();
     if arguments.len() < 2 {
         arguments = vec!["-k".to_string(), "sgfs".to_string()];
+        if !vec!["v1", "v2", "v3", "v4", "v5"].contains(&autogtp_version.as_str()) {
+            arguments.push("-g".to_string());
+            arguments.push("1".to_string());
+        }
     }
     let mut child = match Command::new("./autogtp")
         .args(arguments)
@@ -201,7 +205,7 @@ fn main() {
         Stderr,
     }
     // Early autogtp versions printed to stderr instead of stdout
-    let move_stream = match vec!["v1", "v2", "v3", "v4"].contains(&&autogtp_version[..]) {
+    let move_stream = match vec!["v1", "v2", "v3", "v4"].contains(&autogtp_version.as_str()) {
         true => Stream::Stderr,
         false => Stream::Stdout,
     };
