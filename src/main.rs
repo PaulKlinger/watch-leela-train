@@ -240,8 +240,7 @@ fn main() {
         }
 
         if move_or_pass_regex.is_match(&line) {
-            out.push(' ');
-            out.push(current_player.symbol());
+            out.insert_str(0, &format!("{}: ", current_player.symbol()));
             out.push_str(&board.to_string());
 
             current_player = match current_player {
