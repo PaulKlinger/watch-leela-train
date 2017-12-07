@@ -131,7 +131,7 @@ fn process_chain(
         liberties.insert(coord);
         return;
     } else if !chain_coords.contains(&coord)
-        && (chain_coords.len() == 0 || val == board[*chain_coords.iter().next().unwrap()])
+        && (chain_coords.is_empty() || val == board[*chain_coords.iter().next().unwrap()])
     {
         chain_coords.insert(coord);
         process_chain(board, Coord(row - 1, col), chain_coords, liberties);
@@ -142,16 +142,24 @@ fn process_chain(
 }
 
 fn get_autogtp_version() -> String {
-    let output = Command::new("./autogtp")
-        .arg("--version")
-        .output()
-        .expect("failed to start autogtp");
-    String::from_utf8_lossy(&output.stdout)
-        .trim_right()
-        .split(' ')
-        .last()
-        .expect("Failed to determine autogtp version!")
-        .into()
+    let output = match Command::new("./autogtp").arg("--version").output() {
+        Ok(o) => o,
+        Err(e) => {
+            println!("Error executing \"autogtp --version\": {:?}", e);
+            std::process::exit(1);
+        }
+    };
+    let version_string = String::from_utf8_lossy(&output.stdout);
+    match version_string.trim_right().split(' ').last() {
+        Some(s) => s.into(),
+        None => {
+            println!(
+                "Failed to determine autogtp version! Got version string \"{}\"",
+                version_string
+            );
+            std::process::exit(1);
+        }
+    }
 }
 
 fn main() {
@@ -161,12 +169,19 @@ fn main() {
     if arguments.len() < 2 {
         arguments = vec!["-k".to_string(), "sgfs".to_string()];
     }
-    let mut child = Command::new("./autogtp")
+    let mut child = match Command::new("./autogtp")
         .args(arguments)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .expect("failed to start autogtp");
+    {
+        Ok(c) => c,
+        Err(e) => {
+            println!("Error starting autogtp: {:?}", e);
+            std::process::exit(1);
+        }
+    };
+
 
     let mut child_out = BufReader::new(child.stdout.as_mut().unwrap());
     let mut child_err = BufReader::new(child.stderr.as_mut().unwrap());
@@ -176,9 +191,9 @@ fn main() {
 
     let mut board: Board = Board::new(SIZE);
     let mut current_player = Player::Black;
-    let move_regex = Regex::new(r"[ \n]\d+ \(([A-Z])(\d+)\)").unwrap();
+    let move_regex = Regex::new(r"^ ?\d+ \(([A-Z])(\d+)\)").unwrap();
     let end_regex = Regex::new(r"Game has ended").unwrap();
-    let move_or_pass_regex = Regex::new(r"\((?:[A-Z]\d+)|(?:pass)\)").unwrap();
+    let move_or_pass_regex = Regex::new(r"^ ?\d+ \((?:[A-Z]\d+)|(?:pass)\)").unwrap();
     assert!(move_regex.is_match(" 245 (F18)"));
 
     enum Stream {
@@ -194,9 +209,15 @@ fn main() {
     let delims = [')' as u8, '\n' as u8];
 
     loop {
-        match move_stream {
-            Stream::Stderr => read_until_multiple(&mut child_err, &delims, &mut buffer).unwrap(),
-            Stream::Stdout => read_until_multiple(&mut child_out, &delims, &mut buffer).unwrap(),
+        match match move_stream {
+            Stream::Stderr => read_until_multiple(&mut child_err, &delims, &mut buffer),
+            Stream::Stdout => read_until_multiple(&mut child_out, &delims, &mut buffer),
+        } {
+            Ok(_) => {}
+            Err(e) => {
+                println!("Error reading from autogtp: {:?}", e);
+                std::process::exit(1);
+            }
         };
         if buffer.len() == 0 {
             // autogtp has exited
