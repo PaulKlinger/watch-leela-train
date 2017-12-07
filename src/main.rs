@@ -2,13 +2,16 @@
 extern crate regex;
 
 use std::process::{Command, Stdio};
-use std::io::{BufRead, BufReader};
+use std::io::BufReader;
 use std::str;
 use std::ops::{Index, IndexMut};
 use std::env;
 use std::collections::HashSet;
 
 use regex::Regex;
+
+mod read_until_multiple;
+use read_until_multiple::read_until_multiple;
 
 const SIZE: usize = 19;
 const ROW_INDICES: &'static str = "ABCDEFGHJKLMNOPQRST";
@@ -188,10 +191,12 @@ fn main() {
         false => Stream::Stdout,
     };
 
+    let delims = [')' as u8, '\n' as u8];
+
     loop {
         match move_stream {
-            Stream::Stderr => child_err.read_until(')' as u8, &mut buffer).unwrap(),
-            Stream::Stdout => child_out.read_until(')' as u8, &mut buffer).unwrap(),
+            Stream::Stderr => read_until_multiple(&mut child_err, &delims, &mut buffer).unwrap(),
+            Stream::Stdout => read_until_multiple(&mut child_out, &delims, &mut buffer).unwrap(),
         };
         if buffer.len() == 0 {
             // autogtp has exited
@@ -242,9 +247,9 @@ fn main() {
             current_player = match current_player {
                 Player::White => Player::Black,
                 Player::Black => Player::White,
-            }
+            };
+            out.push('\n');
         }
-        out.push('\n');
         print!("{}", out);
     }
 }

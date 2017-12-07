@@ -5,3 +5,4 @@ authors = ["Paul Klinger <klinger.paul@gmail.com>"]
 
 [dependencies]
 regex = "0.2"
+memchr = "2.0.1"
