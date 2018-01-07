@@ -195,9 +195,9 @@ fn main() {
 
     let mut board: Board = Board::new(SIZE);
     let mut current_player = Player::Black;
-    let move_regex = Regex::new(r"^ ?\d+ \(([A-Z])(\d+)\)").unwrap();
+    let move_regex = Regex::new(r"^ ?\d+ \((?:[BW] )?([A-Z])(\d+)\)").unwrap();
     let end_regex = Regex::new(r"Game has ended").unwrap();
-    let move_or_pass_regex = Regex::new(r"^ ?\d+ \((?:[A-Z]\d+)|(?:pass)\)").unwrap();
+    let move_or_pass_regex = Regex::new(r"^ ?\d+ \((?:[BW] )?(?:[A-Z]\d+)|(?:pass)\)").unwrap();
     assert!(move_regex.is_match(" 245 (F18)"));
 
     enum Stream {
